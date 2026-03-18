@@ -30,5 +30,6 @@ func init() {
 		newListCmd(),
 		newReportCmd(),
 		newDeleteCmd(),
+		newConfigCmd(),
 	)
 }

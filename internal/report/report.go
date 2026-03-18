@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/suhai-art/hourly-cli/internal/config"
 	"github.com/suhai-art/hourly-cli/internal/store"
 
 	"github.com/fatih/color"
@@ -12,6 +13,7 @@ import (
 var (
 	header  = color.New(color.FgCyan, color.Bold)
 	success = color.New(color.FgGreen, color.Bold)
+	earn    = color.New(color.FgMagenta, color.Bold)
 	warn    = color.New(color.FgYellow)
 	muted   = color.New(color.FgHiBlack)
 	bold    = color.New(color.Bold)
@@ -23,14 +25,14 @@ func FormatDuration(d time.Duration) string {
 	return fmt.Sprintf("%dh%02dm", h, m)
 }
 
-func PrintEntries(entries []store.Entry, title string) {
+func PrintEntries(entries []store.Entry, title string, cfg *config.Config) {
 	if len(entries) == 0 {
 		warn.Printf("Nenhum registro encontrado para %s.\n", title)
 		return
 	}
 
 	header.Printf("\n  %s\n", title)
-	fmt.Println(muted.Sprint("  " + repeat("─", 52)))
+	fmt.Println(muted.Sprint("  " + repeat("─", 60)))
 
 	var total time.Duration
 	for _, e := range entries {
@@ -41,19 +43,26 @@ func PrintEntries(entries []store.Entry, title string) {
 			fmt.Printf("  %s  %s  %s  %s",
 				muted.Sprint(dateStr),
 				bold.Sprint(inStr),
-				warn.Sprint("→  aberto"),
+				warn.Sprint("→  aberto  "),
 				muted.Sprint(e.ID),
 			)
 		} else {
 			dur := e.Duration()
 			total += dur
 			outStr := e.Out.Format("15:04")
+			durStr := fmt.Sprintf("%-9s", FormatDuration(dur))
+
 			fmt.Printf("  %s  %s → %s  %s",
 				muted.Sprint(dateStr),
 				bold.Sprint(inStr),
 				bold.Sprint(outStr),
-				success.Sprintf("%-9s", FormatDuration(dur)),
+				success.Sprint(durStr),
 			)
+
+			if cfg != nil && cfg.HasRate() {
+				hours := dur.Hours()
+				fmt.Printf("  %s", earn.Sprintf("%-12s", cfg.Earn(hours)))
+			}
 		}
 		if e.Note != "" {
 			fmt.Printf("  %s", muted.Sprint(e.Note))
@@ -61,8 +70,17 @@ func PrintEntries(entries []store.Entry, title string) {
 		fmt.Println()
 	}
 
-	fmt.Println(muted.Sprint("  " + repeat("─", 52)))
-	fmt.Printf("  Total: %s\n\n", success.Sprint(FormatDuration(total)))
+	fmt.Println(muted.Sprint("  " + repeat("─", 60)))
+
+	totalStr := fmt.Sprintf("%-9s", FormatDuration(total))
+	if cfg != nil && cfg.HasRate() {
+		fmt.Printf("  Total: %s  %s\n\n",
+			success.Sprint(totalStr),
+			earn.Sprintf("%s", cfg.Earn(total.Hours())),
+		)
+	} else {
+		fmt.Printf("  Total: %s\n\n", success.Sprint(totalStr))
+	}
 }
 
 func repeat(s string, n int) string {

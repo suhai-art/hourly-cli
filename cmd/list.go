@@ -3,6 +3,7 @@ package cmd
 import (
 	"time"
 
+	"github.com/suhai-art/hourly-cli/internal/config"
 	"github.com/suhai-art/hourly-cli/internal/report"
 	"github.com/suhai-art/hourly-cli/internal/store"
 
@@ -22,12 +23,17 @@ func newListCmd() *cobra.Command {
 		Long: `Lista registros de horas trabalhadas.
 
 Exemplos:
-  	hourly-cli list           # hoje
-  	hourly-cli list --week    # semana atual
-  	hourly-cli list --month   # mês atual
-  	hourly-cli list --day 2024-03-15`,
+  hourly list           # hoje
+  hourly list --week    # semana atual
+  hourly list --month   # mês atual
+  hourly list --day 2024-03-15`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := store.Load()
+			if err != nil {
+				return err
+			}
+
+			cfg, err := config.Load()
 			if err != nil {
 				return err
 			}
@@ -59,7 +65,7 @@ Exemplos:
 				title = "Hoje, " + now.Format("02/01/2006")
 			}
 
-			report.PrintEntries(entries, title)
+			report.PrintEntries(entries, title, cfg)
 			return nil
 		},
 	}
