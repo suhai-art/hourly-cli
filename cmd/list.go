@@ -22,10 +22,10 @@ func newListCmd() *cobra.Command {
 		Long: `Lista registros de horas trabalhadas.
 
 Exemplos:
-  github.com/suhai-art/hourly-cli list           # hoje
-  github.com/suhai-art/hourly-cli list --week    # semana atual
-  github.com/suhai-art/hourly-cli list --month   # mês atual
-  github.com/suhai-art/hourly-cli list --day 2024-03-15`,
+  	hourly-cli list           # hoje
+  	hourly-cli list --week    # semana atual
+  	hourly-cli list --month   # mês atual
+  	hourly-cli list --day 2024-03-15`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := store.Load()
 			if err != nil {

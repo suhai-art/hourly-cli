@@ -111,10 +111,12 @@ func (s *Store) ByMonth(date time.Time) []Entry {
 }
 
 func ParseTime(s string) (time.Time, error) {
+	// Try with date first
 	t, err := time.ParseInLocation(timeLayout, s, time.Local)
 	if err == nil {
 		return t, nil
 	}
+	// Try time-only (uses today's date)
 	t2, err2 := time.ParseInLocation("15:04", s, time.Local)
 	if err2 != nil {
 		return time.Time{}, errors.New("formato inválido, use HH:MM ou YYYY-MM-DD HH:MM")
@@ -128,11 +130,16 @@ func dataPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".github.com/suhai-art/hourly-cli")
+	dir := filepath.Join(home, ".workhours")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
 	return filepath.Join(dir, "data.json"), nil
+}
+
+// DeleteAll removes all entries.
+func (s *Store) DeleteAll() {
+	s.Entries = []Entry{}
 }
 
 // NewID generates a short unique ID from the current timestamp.
