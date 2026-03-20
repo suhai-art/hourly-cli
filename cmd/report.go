@@ -20,8 +20,8 @@ func newReportCmd() *cobra.Command {
 		Long: `Exibe um relatório consolidado do mês.
 
 Exemplos:
-  workhours report              # mês atual
-  workhours report --month 2024-03`,
+  hourly report              # mês atual
+  hourly report --month 2024-03`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := store.Load()
 			if err != nil {

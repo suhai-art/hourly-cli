@@ -72,7 +72,7 @@ func newConfigShowCmd() *cobra.Command {
 			}
 
 			if !cfg.HasRate() {
-				color.Yellow("Nenhum valor/hora configurado. Use: workhours config set <valor>")
+				color.Yellow("Nenhum valor/hora configurado. Use: hourly config set <valor>")
 				return nil
 			}
 

@@ -58,7 +58,7 @@ func configPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".workhours")
+	dir := filepath.Join(home, ".hourly")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
 	}
