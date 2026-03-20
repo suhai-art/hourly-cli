@@ -64,6 +64,28 @@ func (s *Store) Add(e Entry) {
 	})
 }
 
+func (s *Store) AddOrMerge(e Entry) bool {
+	ey, em, ed := e.In.Date()
+	dur := e.Duration()
+
+	for i, existing := range s.Entries {
+		if existing.Note != "jira-import" {
+			continue
+		}
+		xy, xm, xd := existing.In.Date()
+		if xy == ey && xm == em && xd == ed {
+			if existing.Out != nil && dur > 0 {
+				newOut := existing.Out.Add(dur)
+				s.Entries[i].Out = &newOut
+			}
+			return true
+		}
+	}
+
+	s.Add(e)
+	return false
+}
+
 func (s *Store) Delete(id string) bool {
 	for i, e := range s.Entries {
 		if e.ID == id {

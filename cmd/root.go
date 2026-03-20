@@ -31,5 +31,6 @@ func init() {
 		newReportCmd(),
 		newDeleteCmd(),
 		newConfigCmd(),
+		newImportCmd(),
 	)
 }
