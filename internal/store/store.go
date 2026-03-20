@@ -18,7 +18,6 @@ type Entry struct {
 	Note string     `json:"note,omitempty"`
 }
 
-// Duration returns worked duration. Returns 0 if still open.
 func (e Entry) Duration() time.Duration {
 	if e.Out == nil {
 		return 0
@@ -96,6 +95,25 @@ func (s *Store) Delete(id string) bool {
 	return false
 }
 
+func (s *Store) FindOpenEntry() *Entry {
+	for i := len(s.Entries) - 1; i >= 0; i-- {
+		if s.Entries[i].IsOpen() {
+			return &s.Entries[i]
+		}
+	}
+	return nil
+}
+
+func (s *Store) CloseOpenEntry(out time.Time) (Entry, bool) {
+	for i := len(s.Entries) - 1; i >= 0; i-- {
+		if s.Entries[i].IsOpen() {
+			s.Entries[i].Out = &out
+			return s.Entries[i], true
+		}
+	}
+	return Entry{}, false
+}
+
 func (s *Store) ByDate(date time.Time) []Entry {
 	y, m, d := date.Date()
 	var out []Entry
@@ -133,18 +151,21 @@ func (s *Store) ByMonth(date time.Time) []Entry {
 }
 
 func ParseTime(s string) (time.Time, error) {
-	// Try with date first
-	t, err := time.ParseInLocation(timeLayout, s, time.Local)
-	if err == nil {
+	if s == "now" {
+		return time.Now().Truncate(time.Minute), nil
+	}
+
+	if t, err := time.ParseInLocation(timeLayout, s, time.Local); err == nil {
 		return t, nil
 	}
-	// Try time-only (uses today's date)
-	t2, err2 := time.ParseInLocation("15:04", s, time.Local)
-	if err2 != nil {
-		return time.Time{}, errors.New("formato inválido, use HH:MM ou YYYY-MM-DD HH:MM")
+
+	t, err := time.ParseInLocation("15:04", s, time.Local)
+	if err != nil {
+		return time.Time{}, errors.New("formato inválido, use HH:MM, YYYY-MM-DD HH:MM ou \"now\"")
 	}
+
 	now := time.Now()
-	return time.Date(now.Year(), now.Month(), now.Day(), t2.Hour(), t2.Minute(), 0, 0, time.Local), nil
+	return time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, time.Local), nil
 }
 
 func dataPath() (string, error) {
@@ -159,12 +180,10 @@ func dataPath() (string, error) {
 	return filepath.Join(dir, "data.json"), nil
 }
 
-// DeleteAll removes all entries.
 func (s *Store) DeleteAll() {
 	s.Entries = []Entry{}
 }
 
-// NewID generates a short unique ID from the current timestamp.
 func NewID() string {
 	return time.Now().Format("20060102150405")
 }

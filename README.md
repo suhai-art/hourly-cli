@@ -6,17 +6,24 @@ CLI para registro e controle de horas trabalhadas. Calcule automaticamente o tem
 
 ## Sumário
 
-- [Instalação](#instalação)
-- [Início rápido](#início-rápido)
-- [Comandos](#comandos)
-  - [add](#add)
-  - [list](#list)
-  - [report](#report)
-  - [delete](#delete)
-  - [config](#config)
-  - [import](#import)
-- [Armazenamento](#armazenamento)
-- [Formato de data e hora](#formato-de-data-e-hora)
+- [⏱ hourly-cli](#-hourly-cli)
+  - [Sumário](#sumário)
+  - [Instalação](#instalação)
+    - [Pré-requisitos](#pré-requisitos)
+    - [Build a partir do fonte](#build-a-partir-do-fonte)
+  - [Início rápido](#início-rápido)
+  - [Comandos](#comandos)
+    - [`add`](#add)
+    - [`list`](#list)
+    - [`report`](#report)
+    - [`delete`](#delete)
+    - [`config`](#config)
+      - [`config set`](#config-set)
+      - [`config show`](#config-show)
+    - [`import`](#import)
+  - [Armazenamento](#armazenamento)
+  - [Formato de data e hora](#formato-de-data-e-hora)
+  - [Licença](#licença)
 
 ---
 
@@ -246,12 +253,12 @@ hourly import jira.csv --dry-run
 
 ## Armazenamento
 
-Todos os dados são persistidos localmente em `~/.workhours/`:
+Todos os dados são persistidos localmente em `~/.hourly/`:
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `~/.workhours/data.json` | Registros de horas |
-| `~/.workhours/config.json` | Configurações (valor/hora, moeda) |
+| `~/.hourly/data.json` | Registros de horas |
+| `~/.hourly/config.json` | Configurações (valor/hora, moeda) |
 
 Os arquivos são JSON legíveis — você pode inspecioná-los ou editá-los manualmente se necessário.
 

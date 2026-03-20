@@ -18,10 +18,15 @@ func newAddCmd() *cobra.Command {
 		Short: "Registra entrada (e opcionalmente saída)",
 		Long: `Registra um período de trabalho.
 
+Use "now" para registrar o horário atual.
+Se houver um registro em aberto, "now" (sem saída) fecha automaticamente esse registro.
+
 Exemplos:
-  github.com/suhai-art/hourly-cli add 09:00
-  github.com/suhai-art/hourly-cli add 09:00 18:00
-  github.com/suhai-art/hourly-cli add "2024-03-15 08:30" "2024-03-15 17:45" --note "reunião manhã"`,
+  hourly add now
+  hourly add 09:00
+  hourly add 09:00 18:00
+  hourly add now 18:00
+  hourly add "2024-03-15 08:30" "2024-03-15 17:45" --note "reunião manhã"`,
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := store.Load()
@@ -32,6 +37,17 @@ Exemplos:
 			in, err := store.ParseTime(args[0])
 			if err != nil {
 				return fmt.Errorf("horário de entrada inválido: %w", err)
+			}
+
+			if len(args) == 1 && args[0] == "now" {
+				if closed, ok := s.CloseOpenEntry(in); ok {
+					color.Green("✓ Saída registrada: %s → %s  (%s)",
+						closed.In.Format("02/01 15:04"),
+						in.Format("15:04"),
+						report.FormatDuration(closed.Duration()),
+					)
+					return s.Save()
+				}
 			}
 
 			entry := store.Entry{
