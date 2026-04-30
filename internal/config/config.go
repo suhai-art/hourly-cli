@@ -13,6 +13,7 @@ type Config struct {
 	path       string
 	HourlyRate float64 `json:"hourly_rate"`
 	Currency   string  `json:"currency"`
+	DailyHours float64 `json:"daily_hours,omitempty"`
 	UpdatedAt  string  `json:"updated_at,omitempty"`
 }
 
@@ -45,12 +46,19 @@ func (c *Config) HasRate() bool {
 	return c.HourlyRate > 0
 }
 
-// Earn calculates earnings for a given duration.
-func (c *Config) Earn(d float64) string {
+func (c *Config) HasDailyHours() bool {
+	return c.DailyHours > 0
+}
+
+func (c *Config) DailyDuration() time.Duration {
+	return time.Duration(c.DailyHours * float64(time.Hour))
+}
+
+func (c *Config) Earn(hours float64) string {
 	if !c.HasRate() {
 		return ""
 	}
-	return fmt.Sprintf("%s %.2f", c.Currency, d*c.HourlyRate)
+	return fmt.Sprintf("%s %.2f", c.Currency, hours*c.HourlyRate)
 }
 
 func configPath() (string, error) {
