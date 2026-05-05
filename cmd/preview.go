@@ -51,14 +51,14 @@ Exemplos:
 			totalSoFar := completedToday + elapsed
 
 			goal := cfg.DailyDuration()
-			remaining := goal - completedToday
+			remaining := goal - totalSoFar
 
 			if remaining <= 0 {
 				printGoalAlreadyReached(completedToday, goal)
 				return nil
 			}
 
-			exitTime := openEntry.In.Add(remaining)
+			exitTime := openEntry.In.Add(goal - completedToday)
 			printPreview(openEntry, now, completedToday, totalSoFar, goal, remaining, exitTime, cfg)
 			return nil
 		},
@@ -117,7 +117,7 @@ func printPreview(
 	if cfg.HasRate() {
 		totalEarnings := cfg.Earn(goal.Hours())
 		currentEarnings := cfg.Earn(totalSoFar.Hours())
-		fmt.Printf("  Ganho atual:       %s\n", earnStyle.Sprint(currentEarnings))
+		fmt.Printf("  Ganho atual:        %s\n", earnStyle.Sprint(currentEarnings))
 		fmt.Printf("  Ganho ao finalizar:%s\n", earnStyle.Sprint(" "+totalEarnings))
 	}
 
