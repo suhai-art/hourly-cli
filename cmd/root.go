@@ -33,5 +33,6 @@ func init() {
 		newConfigCmd(),
 		newImportCmd(),
 		newPreviewCmd(),
+		newBalanceCmd(),
 	)
 }
