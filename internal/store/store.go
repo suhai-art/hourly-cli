@@ -20,7 +20,7 @@ type Entry struct {
 
 func (e Entry) Duration() time.Duration {
 	if e.Out == nil {
-		return 0
+		return time.Since(e.In)
 	}
 	return e.Out.Sub(e.In)
 }

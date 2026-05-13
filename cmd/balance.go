@@ -165,9 +165,7 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 func sumCompletedDuration(entries []store.Entry) time.Duration {
 	var total time.Duration
 	for _, e := range entries {
-		if !e.IsOpen() {
-			total += e.Duration()
-		}
+		total += e.Duration()
 	}
 	return total
 }
