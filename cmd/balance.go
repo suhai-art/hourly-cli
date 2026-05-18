@@ -21,6 +21,10 @@ func newBalanceCmd() *cobra.Command {
 		Long: `Compara as horas trabalhadas no mês com a meta esperada,
 considerando apenas os dias úteis (segunda a sexta).
 
+A meta de horas/dia usada é a configurada via:
+  hourly config set --balance-daily-hours <horas>   (específica para este comando)
+  hourly config set --daily-hours <horas>           (fallback genérico)
+
 Mostra:
   - Total de dias úteis no mês
   - Horas esperadas até hoje
@@ -37,9 +41,11 @@ Exemplos:
 				return err
 			}
 
-			if !cfg.HasDailyHours() {
+			if !cfg.HasBalanceDailyHours() {
 				return fmt.Errorf(
-					"nenhuma meta de horas/dia configurada. Use: hourly config set --daily-hours <horas>",
+					"nenhuma meta de horas/dia configurada para balance.\n" +
+						"Use: hourly config set --balance-daily-hours <horas>\n" +
+						"  ou hourly config set --daily-hours <horas>",
 				)
 			}
 
@@ -66,7 +72,6 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 	now := time.Now()
 	isCurrentMonth := ref.Year() == now.Year() && ref.Month() == now.Month()
 
-	// Workday counts
 	totalWorkdays := workdays.CountInMonth(ref)
 	var workedWorkdays int
 	if isCurrentMonth {
@@ -76,8 +81,8 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 	}
 	remainingWorkdays := totalWorkdays - workedWorkdays
 
-	// Expected and actual hours
-	dailyGoal := cfg.DailyDuration()
+	// Use the balance-specific daily goal (falls back to daily_hours if not set)
+	dailyGoal := cfg.BalanceDailyDuration()
 	expectedSoFar := time.Duration(workedWorkdays) * dailyGoal
 	monthGoal := time.Duration(totalWorkdays) * dailyGoal
 
@@ -85,11 +90,8 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 	workedSoFar := sumCompletedDuration(entries)
 
 	balance := workedSoFar - expectedSoFar
-
-	// Projection: worked + (remaining workdays × daily goal)
 	projected := workedSoFar + time.Duration(remainingWorkdays)*dailyGoal
 
-	// Styles
 	headerStyle := color.New(color.FgCyan, color.Bold)
 	muted := color.New(color.FgHiBlack)
 	boldStyle := color.New(color.Bold)
@@ -104,7 +106,10 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 	headerStyle.Printf("  Balanço de horas — %s\n", ref.Format("January 2006"))
 	fmt.Println(sep)
 
-	// Workdays summary
+	fmt.Printf("  Meta do dia (balance): %s\n",
+		boldStyle.Sprint(report.FormatDuration(dailyGoal)))
+	fmt.Println(sep)
+
 	fmt.Printf("  Dias úteis no mês:     %s\n",
 		boldStyle.Sprintf("%d dias", totalWorkdays))
 	fmt.Printf("  Dias úteis até hoje:   %s\n",
@@ -114,7 +119,6 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 
 	fmt.Println(sep)
 
-	// Hours summary
 	fmt.Printf("  Meta do mês:           %s\n",
 		boldStyle.Sprint(report.FormatDuration(monthGoal)))
 	fmt.Printf("  Esperado até hoje:     %s\n",
@@ -124,7 +128,6 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 
 	fmt.Println(sep)
 
-	// Balance
 	fmt.Printf("  Saldo atual:           ")
 	switch {
 	case balance > 0:
@@ -137,7 +140,6 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 
 	fmt.Println(sep)
 
-	// Projection
 	fmt.Printf("  Projeção ao fim do mês: %s", boldStyle.Sprint(report.FormatDuration(projected)))
 	projBalance := projected - monthGoal
 	switch {
@@ -149,7 +151,6 @@ func printBalance(s *store.Store, cfg *config.Config, ref time.Time) {
 		fmt.Println()
 	}
 
-	// Earnings
 	if cfg.HasRate() {
 		fmt.Println(sep)
 		fmt.Printf("  Ganho até hoje:         %s\n",

@@ -18,7 +18,11 @@ func newPreviewCmd() *cobra.Command {
 		Long: `Calcula e exibe o horário de saída previsto para o dia.
 
 Soma todas as horas já concluídas no dia ao tempo do registro em aberto,
-e projeta quando você atingirá a meta de horas/dia configurada.
+e projeta quando você atingirá a meta de horas/dia configurada para preview.
+
+A meta de horas/dia usada é a configurada via:
+  hourly config set --preview-daily-hours <horas>   (específica para este comando)
+  hourly config set --daily-hours <horas>           (fallback genérico)
 
 Exemplos:
   hourly preview`,
@@ -28,9 +32,11 @@ Exemplos:
 				return err
 			}
 
-			if !cfg.HasDailyHours() {
+			if !cfg.HasPreviewDailyHours() {
 				return fmt.Errorf(
-					"nenhuma meta de horas/dia configurada. Use: hourly config set --daily-hours <horas>",
+					"nenhuma meta de horas/dia configurada para preview.\n" +
+						"Use: hourly config set --preview-daily-hours <horas>\n" +
+						"  ou hourly config set --daily-hours <horas>",
 				)
 			}
 
@@ -50,7 +56,8 @@ Exemplos:
 			elapsed := now.Sub(openEntry.In)
 			totalSoFar := completedToday + elapsed
 
-			goal := cfg.DailyDuration()
+			// Use the preview-specific daily goal (falls back to daily_hours if not set)
+			goal := cfg.PreviewDailyDuration()
 			remaining := goal - totalSoFar
 
 			if remaining <= 0 {
@@ -93,7 +100,7 @@ func printPreview(
 	earnStyle := color.New(color.FgMagenta, color.Bold)
 	bold := color.New(color.Bold)
 
-	dashes := func(n int) string {
+	sep := func(n int) string {
 		out := ""
 		for i := 0; i < n; i++ {
 			out += "─"
@@ -103,22 +110,24 @@ func printPreview(
 
 	fmt.Println()
 	headerStyle.Printf("  Preview do dia — %s\n", now.Format("02/01/2006"))
-	fmt.Println(muted.Sprint("  " + dashes(52)))
+	fmt.Println(muted.Sprint("  " + sep(52)))
 
-	fmt.Printf("  Entrada atual:     %s\n", bold.Sprint(open.In.Format("15:04")))
-	fmt.Printf("  Horas já feitas:   %s\n", successBold.Sprint(report.FormatDuration(completedToday)))
-	fmt.Printf("  Total acumulado:   %s\n", successBold.Sprint(report.FormatDuration(totalSoFar)))
-	fmt.Printf("  Meta do dia:       %s\n", bold.Sprint(report.FormatDuration(goal)))
-	fmt.Printf("  Faltam:            %s\n", warnStyle.Sprint(report.FormatDuration(remaining)))
+	fmt.Printf("  Meta do dia (preview): %s\n", bold.Sprint(report.FormatDuration(goal)))
+	fmt.Println(muted.Sprint("  " + sep(52)))
 
-	fmt.Println(muted.Sprint("  " + dashes(52)))
-	fmt.Printf("  Saída prevista:    %s\n", successBold.Sprintf("⏰  %s", exitTime.Format("15:04")))
+	fmt.Printf("  Entrada atual:         %s\n", bold.Sprint(open.In.Format("15:04")))
+	fmt.Printf("  Horas já feitas:       %s\n", successBold.Sprint(report.FormatDuration(completedToday)))
+	fmt.Printf("  Total acumulado:       %s\n", successBold.Sprint(report.FormatDuration(totalSoFar)))
+	fmt.Printf("  Faltam:                %s\n", warnStyle.Sprint(report.FormatDuration(remaining)))
+
+	fmt.Println(muted.Sprint("  " + sep(52)))
+	fmt.Printf("  Saída prevista:        %s\n", successBold.Sprintf("⏰  %s", exitTime.Format("15:04")))
 
 	if cfg.HasRate() {
 		totalEarnings := cfg.Earn(goal.Hours())
 		currentEarnings := cfg.Earn(totalSoFar.Hours())
-		fmt.Printf("  Ganho atual:        %s\n", earnStyle.Sprint(currentEarnings))
-		fmt.Printf("  Ganho ao finalizar:%s\n", earnStyle.Sprint(" "+totalEarnings))
+		fmt.Printf("  Ganho atual:           %s\n", earnStyle.Sprint(currentEarnings))
+		fmt.Printf("  Ganho ao finalizar:    %s\n", earnStyle.Sprint(totalEarnings))
 	}
 
 	fmt.Println()

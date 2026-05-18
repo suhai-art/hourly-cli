@@ -10,11 +10,13 @@ import (
 )
 
 type Config struct {
-	path       string
-	HourlyRate float64 `json:"hourly_rate"`
-	Currency   string  `json:"currency"`
-	DailyHours float64 `json:"daily_hours,omitempty"`
-	UpdatedAt  string  `json:"updated_at,omitempty"`
+	path              string
+	HourlyRate        float64 `json:"hourly_rate"`
+	Currency          string  `json:"currency"`
+	DailyHours        float64 `json:"daily_hours,omitempty"`
+	BalanceDailyHours float64 `json:"balance_daily_hours,omitempty"`
+	PreviewDailyHours float64 `json:"preview_daily_hours,omitempty"`
+	UpdatedAt         string  `json:"updated_at,omitempty"`
 }
 
 func Load() (*Config, error) {
@@ -50,8 +52,30 @@ func (c *Config) HasDailyHours() bool {
 	return c.DailyHours > 0
 }
 
+func (c *Config) HasBalanceDailyHours() bool {
+	return c.BalanceDailyHours > 0 || c.DailyHours > 0
+}
+
+func (c *Config) HasPreviewDailyHours() bool {
+	return c.PreviewDailyHours > 0 || c.DailyHours > 0
+}
+
 func (c *Config) DailyDuration() time.Duration {
 	return time.Duration(c.DailyHours * float64(time.Hour))
+}
+
+func (c *Config) BalanceDailyDuration() time.Duration {
+	if c.BalanceDailyHours > 0 {
+		return time.Duration(c.BalanceDailyHours * float64(time.Hour))
+	}
+	return c.DailyDuration()
+}
+
+func (c *Config) PreviewDailyDuration() time.Duration {
+	if c.PreviewDailyHours > 0 {
+		return time.Duration(c.PreviewDailyHours * float64(time.Hour))
+	}
+	return c.DailyDuration()
 }
 
 func (c *Config) Earn(hours float64) string {
